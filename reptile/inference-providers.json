@@ -1,0 +1,107 @@
+{
+  "providers": [
+    {
+      "id": "groq",
+      "name": "Groq (free tier)",
+      "baseUrl": "https://api.groq.com/openai/v1",
+      "apiKeyEnvVar": "GROQ_API_KEY",
+      "priority": 1,
+      "enabled": true,
+      "maxRequestsPerMinute": 30,
+      "maxTokensPerMinute": 8000,
+      "models": [
+        {
+          "id": "openai/gpt-oss-120b",
+          "tier": "reasoning",
+          "contextWindow": 131072,
+          "maxOutputTokens": 8192,
+          "costPerInputToken": 0,
+          "costPerOutputToken": 0,
+          "supportsTools": true,
+          "supportsVision": false,
+          "supportsStreaming": true
+        },
+        {
+          "id": "openai/gpt-oss-20b",
+          "tier": "fast",
+          "contextWindow": 131072,
+          "maxOutputTokens": 8192,
+          "costPerInputToken": 0,
+          "costPerOutputToken": 0,
+          "supportsTools": true,
+          "supportsVision": false,
+          "supportsStreaming": true
+        }
+      ]
+    },
+    {
+      "id": "gemini",
+      "name": "Google Gemini (OpenAI endpoint, free tier)",
+      "baseUrl": "https://generativelanguage.googleapis.com/v1beta/openai",
+      "apiKeyEnvVar": "GEMINI_API_KEY",
+      "priority": 2,
+      "enabled": true,
+      "maxRequestsPerMinute": 10,
+      "maxTokensPerMinute": 250000,
+      "models": [
+        {
+          "id": "gemini-3.5-flash-lite",
+          "tier": "cheap",
+          "contextWindow": 1000000,
+          "maxOutputTokens": 8192,
+          "costPerInputToken": 0,
+          "costPerOutputToken": 0,
+          "supportsTools": true,
+          "supportsVision": true,
+          "supportsStreaming": true
+        }
+      ]
+    },
+    {
+      "id": "local",
+      "name": "Ollama (local)",
+      "baseUrl": "http://127.0.0.1:11434/v1",
+      "apiKeyEnvVar": "OLLAMA_API_KEY",
+      "priority": 3,
+      "enabled": true,
+      "maxRequestsPerMinute": 60,
+      "maxTokensPerMinute": 100000,
+      "models": [
+        {
+          "id": "qwen3:8b",
+          "tier": "cheap",
+          "contextWindow": 32768,
+          "maxOutputTokens": 4096,
+          "costPerInputToken": 0,
+          "costPerOutputToken": 0,
+          "supportsTools": true,
+          "supportsVision": false,
+          "supportsStreaming": true
+        }
+      ]
+    }
+  ],
+  "tierDefaults": {
+    "reasoning": {
+      "preferredProvider": "groq",
+      "fallbackOrder": [
+        "gemini",
+        "local"
+      ]
+    },
+    "fast": {
+      "preferredProvider": "groq",
+      "fallbackOrder": [
+        "gemini",
+        "local"
+      ]
+    },
+    "cheap": {
+      "preferredProvider": "gemini",
+      "fallbackOrder": [
+        "groq",
+        "local"
+      ]
+    }
+  }
+}

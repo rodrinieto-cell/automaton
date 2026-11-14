@@ -35,6 +35,7 @@ import {
   executeTool,
 } from "./tools.js";
 import { sanitizeInput } from "./injection-defense.js";
+import { isReptileMode, reptileTools, SAFE_BUILTIN_TOOLS, earningsTier, tierToCents } from "../reptile/mode.js";
 import { getSurvivalTier } from "../conway/credits.js";
 import { getUsdcBalance } from "../conway/x402.js";
 import {
@@ -96,8 +97,11 @@ export async function runAgentLoop(
   const { identity, config, db, conway, inference, social, skills, policyEngine, spendTracker, onStateChange, onTurnComplete, ollamaBaseUrl } =
     options;
 
-  const builtinTools = createBuiltinTools(identity.sandboxId);
-  const installedTools = loadInstalledTools(db);
+  // REPTILE mode: no shell, no money, no self-modification; REPTILE tools instead (see src/reptile/mode.ts)
+  const builtinTools = isReptileMode()
+    ? [...createBuiltinTools(identity.sandboxId).filter((t) => SAFE_BUILTIN_TOOLS.has(t.name)), ...reptileTools(config.name)]
+    : createBuiltinTools(identity.sandboxId);
+  const installedTools = isReptileMode() ? [] : loadInstalledTools(db);
   const tools = [...builtinTools, ...installedTools];
   const toolContext: ToolContext = {
     identity,
@@ -151,7 +155,7 @@ export async function runAgentLoop(
       }
       // If no OpenAI key is set but Conway key is available, use Conway as
       // the OpenAI provider (Conway Compute is OpenAI API-compatible).
-      if (!process.env.OPENAI_API_KEY && config.conwayApiKey) {
+      if (!isReptileMode() && !process.env.OPENAI_API_KEY && config.conwayApiKey) { // REPTILE mode: never Conway Compute
         process.env.OPENAI_API_KEY = config.conwayApiKey;
         process.env.OPENAI_BASE_URL = `${config.conwayApiUrl}/v1`;
       }
@@ -427,6 +431,11 @@ export async function runAgentLoop(
 
       // Refresh financial state periodically
       financial = await getFinancialState(conway, identity.address, db, config.chainType || identity.chainType || "evm");
+      // REPTILE mode: survival = euros earned per week in REPTILE's Criadero, not compute credits; no wallet top-ups
+      if (isReptileMode()) {
+        try { const e = await earningsTier(config.name); financial = { ...financial, creditsCents: tierToCents(e.tier), usdcBalance: 0 }; }
+        catch { financial = { ...financial, creditsCents: -1, usdcBalance: 0 }; }
+      }
 
       // Check survival tier
       // api_unreachable: creditsCents === -1 means API failed with no cache.

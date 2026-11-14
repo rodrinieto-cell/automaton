@@ -196,7 +196,8 @@ async function run(): Promise<void> {
   // Load wallet (chain-aware)
   const { account, chainIdentity, chainType: walletChainType } = await getWallet();
   const resolvedChainType = config.chainType || walletChainType || "evm";
-  const apiKey = config.conwayApiKey || loadApiKeyFromConfig();
+  // REPTILE mode (REPTILE_URL set): no Conway account needed
+  const apiKey = config.conwayApiKey || loadApiKeyFromConfig() || (process.env.REPTILE_URL ? "reptile-mode" : "");
   if (!apiKey) {
     logger.error("No API key found. Run: automaton --provision");
     process.exit(1);
